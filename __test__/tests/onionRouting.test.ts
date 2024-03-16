@@ -603,7 +603,7 @@ describe("Onion Routing", () => {
 
         expect(
           lastReceivedEncryptedMessage !== null &&
-            /^[A-Za-z0-9+/=]*$/.test(lastReceivedEncryptedMessage)
+          /^[A-Za-z0-9+/=]*$/.test(lastReceivedEncryptedMessage)
         ).toBeTruthy();
 
         const lastReceivedDecryptedMessage =
@@ -615,7 +615,7 @@ describe("Onion Routing", () => {
 
         expect(
           lastReceivedDecryptedMessage !== null &&
-            /^[A-Za-z0-9+/=]*$/.test(lastReceivedDecryptedMessage)
+          /^[A-Za-z0-9+/=]*$/.test(lastReceivedDecryptedMessage)
         ).toBeTruthy();
       }
 
@@ -634,7 +634,7 @@ describe("Onion Routing", () => {
 
         expect(
           lastReceivedEncryptedMessage !== null &&
-            /^[A-Za-z0-9+/=]*$/.test(lastReceivedEncryptedMessage)
+          /^[A-Za-z0-9+/=]*$/.test(lastReceivedEncryptedMessage)
         ).toBeTruthy();
 
         const lastReceivedDecryptedMessage =

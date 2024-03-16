@@ -27,7 +27,7 @@ type GenerateRsaKeyPair = {
 export async function generateRsaKeyPair(): Promise<GenerateRsaKeyPair> {
   const keys = await webcrypto.subtle.generateKey(
     {
-      name: "RSA-0AEP",
+      name: "RSA-OAEP",
       modulusLength: 2048,
       publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
       hash: "SHA-256"
@@ -62,7 +62,7 @@ export async function importPubKey(
     "spki",
     keyData,
     {
-      name: "RSA-0AEP",
+      name: "RSA-OAEP",
       hash: "SHA-256"
     },
     true,
@@ -79,7 +79,7 @@ export async function importPrvKey(
     "pkcs8",
     keyData,
     {
-      name: "RSA-0AEP",
+      name: "RSA-OAEP",
       hash: "SHA-256"
     },
     true,
@@ -95,12 +95,12 @@ export async function rsaEncrypt(
   const publicKey = await importPubKey(strPublicKey)
   const encryptedData = await webcrypto.subtle.encrypt(
     {
-      name: "RSA-0AEP"
+      name: "RSA-OAEP"
     },
     publicKey,
-    Buffer.from(b64Data, "base64")
+    base64ToArrayBuffer(b64Data)
   )
-  return arrayBufferToBase64(encryptedData)
+  return arrayBufferToBase64(new Uint8Array(encryptedData).buffer)
 }
 
 // Decrypts a message using an RSA private key
@@ -110,12 +110,12 @@ export async function rsaDecrypt(
 ): Promise<string> {
   const decryptedData = await webcrypto.subtle.decrypt(
     {
-      name: "RSA-0AEP"
+      name: "RSA-OAEP"
     },
     privateKey,
     base64ToArrayBuffer(data)
   )
-  return Buffer.from(decryptedData).toString("utf-8")
+  return arrayBufferToBase64(decryptedData)
 }
 
 // ######################
@@ -126,7 +126,7 @@ export async function rsaDecrypt(
 export async function createRandomSymmetricKey(): Promise<webcrypto.CryptoKey> {
   return await webcrypto.subtle.generateKey(
     {
-      name: "AES-GCM",
+      name: "AES-CBC",
       length: 256
     },
     true,
@@ -144,12 +144,11 @@ export async function exportSymKey(key: webcrypto.CryptoKey): Promise<string> {
 export async function importSymKey(
   strKey: string
 ): Promise<webcrypto.CryptoKey> {
-  const keyData = base64ToArrayBuffer(strKey)
   return await webcrypto.subtle.importKey(
     "raw",
-    keyData,
+    base64ToArrayBuffer(strKey),
     {
-      name: "AES-GCM"
+      name: "AES-CBC"
     },
     true,
     ["encrypt", "decrypt"]
@@ -161,19 +160,16 @@ export async function symEncrypt(
   key: webcrypto.CryptoKey,
   data: string
 ): Promise<string> {
-  const iv = crypto.getRandomValues(new Uint8Array(12))
   const encryptedData = await webcrypto.subtle.encrypt(
     {
-      name: "AES-GCM",
-      iv: iv
+      name: "AES-CBC",
+      iv: new Uint8Array(16)
     },
     key,
     new TextEncoder().encode(data)
   )
-  const encryptedDataIv = new Uint8Array(iv.length+encryptedData.byteLength)
-  encryptedDataIv.set(iv)
-  encryptedDataIv.set(new Int8Array(encryptedData), iv.length)
-  return arrayBufferToBase64(encryptedDataIv)
+  const dataB64 = arrayBufferToBase64(encryptedData);
+  return dataB64;
 }
 
 // Decrypt a message using a symmetric key
@@ -182,16 +178,13 @@ export async function symDecrypt(
   encryptedData: string
 ): Promise<string> {
   const key = await importSymKey(strKey)
-  const dataIv = base64ToArrayBuffer(encryptedData)
-  const iv = dataIv.slice(0, 12)
-  const data = dataIv.slice(12)
   const decryptedData = await webcrypto.subtle.decrypt(
     {
-      name: "AES-GCM",
-      iv: iv
+      name: "AES-CBC",
+      iv: new Uint8Array(16)
     },
     key,
-    data
+    base64ToArrayBuffer(encryptedData)
   )
   return new TextDecoder().decode(decryptedData)
 }
